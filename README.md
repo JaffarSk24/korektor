@@ -35,3 +35,11 @@ Korektor is a web editor that provides Slovak grammar, spelling, casing and punc
 
 ## Status
 Both Dev and Prod environments are operational. API and UI respond over HTTPS.
+
+## Demo
+- Production: https://whiteeagles.sk
+- Development (staging): https://dev.whiteeagles.sk
+
+Quick test:
+1. Open the site (production or dev).
+2. Enter a Slovak text and wait for suggestions — API endpoint: POST /api/check
