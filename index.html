@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Korektor slovenčiny Vám prináša spoločnosť White Eagles & Co. s.r.o.</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --primary:#4c536d;
+      --accent:#ff500c;
+      --ok:#4c536d;
+      --banner:#eef3f9;
+    }
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f7f8fa;color:var(--primary);margin:18px}
+    h1{font-size:20px;margin:0 0 10px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;width:100%}
+    .card{background:#fff;padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.04)}
+    textarea{width:100%;height:15rem;padding:14px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;resize:vertical;line-height:1.5;font-size:15px}
+    .output{width:100%;height:15rem;padding:14px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;overflow:auto;position:relative}
+    .error-underline{background-color:rgba(255,80,12,0.25);border-radius:3px;cursor:pointer;padding:1px 2px}
+    .word-replaced{background-color:rgba(76,83,109,0.06)}
+    .btn-accent{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:999px;cursor:pointer}
+    .apply-used{background:#ccc !important;color:#666 !important;cursor:not-allowed}
+    .fade-in{animation:fadeInUp .32s ease}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .fade-out{animation:fadeOutUp .32s ease forwards}
+    @keyframes fadeOutUp{from{opacity:1}to{opacity:0;transform:translateY(-10px)}}
+    .suggest-menu{position:absolute;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:999;display:none;overflow:hidden}
+    .suggest-option{padding:8px 12px;cursor:pointer;white-space:nowrap}
+    .suggest-option:hover{background:rgba(255,80,12,0.06)}
+    .copy-btn{position:absolute;top:10px;right:10px;background:transparent;border:0;padding:6px;border-radius:6px;color:#6b7280;cursor:pointer;transform:scale(0.8);z-index:20}
+    .copy-btn:hover{background:rgba(255,80,12,0.06);color:var(--accent)}
+    .copy-toast{position:absolute;right:10px;background:var(--primary);color:#fff;padding:6px 10px;border-radius:8px;font-size:13px;opacity:0;transform:translateY(-6px);transition:opacity .18s,transform .18s;pointer-events:none;z-index:25}
+    .copy-toast.show{opacity:1;transform:none}
+    .errors-list{display:flex;flex-direction:column;gap:12px}
+    .meta{color:#6b7280;font-size:13px;margin-top:12px}
+    .punct-banner{
+      display:none;
+      margin:14px 0;
+      padding:10px 12px;
+      background: var(--banner);
+      border:1px solid #d0d8e0;
+      color:#364155;
+      border-radius:10px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.03);
+      align-items:center;
+      gap:10px;
+    }
+    .ok-box{
+      display:none;
+      margin-top:12px;
+      padding:12px 14px;
+      background:#ffffff;
+      border:1px solid #e5e7eb;
+      border-left:5px solid var(--ok);
+      border-radius:10px;
+      color:var(--primary);
+      box-shadow:0 6px 18px rgba(0,0,0,0.04);
+      align-items:center;
+      gap:10px;
+    }
+    .ok-check,.banner-check{
+      width:18px;height:18px;display:inline-block;
+      border-radius:50%;
+      border:2px solid var(--ok);
+      position:relative;
+      flex:0 0 18px;
+    }
+    .ok-check::after,.banner-check::after{
+      content:"";
+      position:absolute;left:3px;top:4px;
+      width:8px;height:4px;border-left:2px solid var(--ok);border-bottom:2px solid var(--ok);
+      transform:rotate(-45deg);
+    }
+  </style>
+</head>
+<body>
+  <h1>🔎 Korektor slovenčiny Vám prináša spoločnosť White Eagles & Co. s.r.o.</h1>
+  <p class="meta" id="placeholderText">Sem napíšte text.</p>
+
+  <div class="grid">
+    <div style="position:relative">
+      <textarea id="inputText" placeholder="Sem napíšte text."></textarea>
+      <button id="copyBtn" class="copy-btn" title="Skopírovať text" aria-label="Skopírovať">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="6" width="11" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/>
+          <rect x="8" y="4" width="11" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+      </button>
+      <div id="copyToast" class="copy-toast" style="top:48px;display:block;opacity:0">Skopírované</div>
+      <div id="punctBanner" class="punct-banner">
+        <span class="banner-check" aria-hidden="true"></span>
+        <span><strong>Automatická oprava interpunkcie:</strong> Text bol automaticky opravený (pridané čiarky, bodky, atď.).</span>
+      </div>
+    </div>
+
+    <div class="output" id="outputText" aria-live="polite"></div>
+  </div>
+
+  <h2 style="margin-top:18px">Nájdené problémy</h2>
+  <div id="errors" class="errors-list"></div>
+
+  <div id="noIssues" class="ok-box">
+    <span class="ok-check" aria-hidden="true"></span>
+    <span>V texte sa nenašli žiadne problémy.</span>
+  </div>
+
+  <div id="suggestMenu" class="suggest-menu" role="menu" aria-hidden="true"></div>
+
+<script>
+const API = "/api";
+const inputEl = document.getElementById('inputText');
+const placeholderText = document.getElementById('placeholderText');
+const outputEl = document.getElementById('outputText');
+const errorsContainer = document.getElementById('errors');
+const noIssuesBox = document.getElementById('noIssues');
+const menu = document.getElementById('suggestMenu');
+const copyBtn = document.getElementById('copyBtn');
+const copyToast = document.getElementById('copyToast');
+const punctBanner = document.getElementById('punctBanner');
+let lastMatches = [];
+let correctedText = '';
+
+const escapeHtml = s => (s||'').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
+
+function renderFromApiText(text, matches, originalInput){
+  matches = (matches||[]).slice().sort((a,b)=>a.offset - b.offset);
+  if (text !== (originalInput ?? text)) { punctBanner.style.display = 'flex'; } else { punctBanner.style.display = 'none'; }
+  let html = '', pos = 0;
+  matches.forEach((m, i) => {
+    if (m.offset < pos) return;
+    html += escapeHtml(text.slice(pos, m.offset));
+    const wrong = text.slice(m.offset, m.offset + m.length);
+    const suggestions = (m.replacements && m.replacements.length) ? m.replacements.map(r => r.value || r).join('|') : '';
+    html += `<span id="err-${i}" class="error-underline" data-suggest="${escapeHtml(suggestions)}" data-offset="${m.offset}" data-length="${m.length}" data-key="${escapeHtml(wrong.toLowerCase())}" data-idx="${i}">${escapeHtml(wrong)}</span>`;
+    pos = m.offset + m.length;
+  });
+  html += escapeHtml(text.slice(pos));
+  outputEl.innerHTML = html;
+  errorsContainer.innerHTML = '';
+  if (matches.length > 0){
+    const map = {};
+    matches.forEach(m => { const wrong = text.slice(m.offset, m.offset + m.length); if (!map[wrong.toLowerCase()]) map[wrong.toLowerCase()] = m; });
+    Object.keys(map).forEach(key => {
+      const m = map[key], first = (m.replacements && m.replacements[0] && (m.replacements[0].value || m.replacements[0])) || '';
+      const card = document.createElement('div');
+      card.className = 'card fade-in'; card.dataset.key = key;
+      let eg = ''; if (m.examples && m.examples.length) eg = `<div style="margin-top:6px;color:#444;font-size:13px">Príklady: ${m.examples.map(e=>escapeHtml(e)).join('; ')}</div>`;
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:14px">${escapeHtml(text.slice(m.offset, m.offset + m.length))} → ${escapeHtml(first)}</strong>
+          <button class="apply btn-accent">${first ? 'Použiť' : 'Navrhnúť'}</button>
+        </div>
+        <div style="margin-top:6px;color:#6b7280;font-size:13px">${escapeHtml(m.message || 'Navrhnuté opravy')}</div>
+        ${eg}
+      `;
+      errorsContainer.appendChild(card);
+    });
+    errorsContainer.style.display = ''; noIssuesBox.style.display = 'none';
+  } else { errorsContainer.style.display = 'none'; noIssuesBox.style.display = 'flex'; }
+  correctedText = getOutputPlainText();
+}
+
+function getOutputPlainText(){ let t = ''; outputEl.childNodes.forEach(n => t+=n.textContent); return t; }
+function applyReplacement(offset, length, replacement, spanEl){
+  const before = correctedText.slice(0, parseInt(offset,10));
+  const after = correctedText.slice(parseInt(offset,10)+parseInt(length,10));
+  const next = before + replacement + after; inputEl.value = next;
+  if (spanEl){ spanEl.textContent = replacement; spanEl.classList.remove('error-underline'); spanEl.classList.add('word-replaced');}
+  menu.style.display = 'none'; const key = spanEl? spanEl.dataset.key: null;
+  if (key){ const card = errorsContainer.querySelector(`[data-key="${key}"]`); if (card){ card.classList.add('fade-out'); setTimeout(()=>card.remove(),320); } }
+  checkNow();
+}
+
+copyBtn.addEventListener('click', ()=>{
+  const val = inputEl.value||''; navigator.clipboard.writeText(val).then(()=>{
+    const top = copyBtn.offsetTop + copyBtn.offsetHeight + 8; copyToast.style.top = top + 'px';
+    copyToast.textContent = `Skopírované (${val.length} znakov)`; copyToast.classList.add('show');
+    setTimeout(()=> copyToast.classList.remove('show'), 1500);
+  });
+});
+document.addEventListener('click', e=>{ if (!e.target.closest('.error-underline') && !e.target.closest('.suggest-menu')) menu.style.display='none';});
+
+async function checkNow(){
+  const text = inputEl.value||''; 
+  if(!text.trim()){
+    outputEl.innerHTML=''; errorsContainer.innerHTML='';errorsContainer.style.display='none'; 
+    noIssuesBox.style.display='flex'; punctBanner.style.display='none'; 
+    placeholderText.style.display = 'block';
+    return;
+  }
+  placeholderText.style.display = 'none';
+  try{ const res = await fetch(`${API}/check`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,language:'sk-SK',level:'picky'})});
+    if(!res.ok) throw new Error(); const data=await res.json(); const original=data.text||text; lastMatches=data.matches||[];
+    renderFromApiText(original,lastMatches,text); inputEl.value = getOutputPlainText();
+  }catch(err){ console.error(err);}
+}
+const debouncedCheck = debounce(()=>checkNow(),600);
+inputEl.addEventListener('input', ()=>{ if(!inputEl.value.trim()){placeholderText.style.display='block';} else {placeholderText.style.display='none';} debouncedCheck();});
+document.addEventListener('DOMContentLoaded', ()=>{ if(inputEl.value.trim()) checkNow();});
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: slovak-editor-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - languagetool
+    environment:
+      - LANGUAGETOOL_URL=http://languagetool:8010
+    networks:
+      - korektornet
+    volumes:
+      - ./backend:/app:ro
+      - /opt/korektor/corpus:/opt/korektor/corpus
+
+  languagetool:
+    image: silviof/docker-languagetool:latest
+    container_name: languagetool
+    ports:
+      - "8010:8010"
+    environment:
+      - Java_Xmx=1g
+      - langtool.server.enableSpellChecking=true
+      - langtool.languageModel=/LanguageTool-6.6/org/languagetool/resource/sk
+    networks:
+      - korektornet
+
+  frontend:
+    image: nginx:alpine
+    container_name: slovak-editor-frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    networks:
+      - korektornet
+
+networks:
+  korektornet:
+    driver: bridge

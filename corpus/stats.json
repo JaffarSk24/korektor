@@ -1,0 +1,27 @@
+{
+  "files_processed": 55,
+  "total_sentences": 3689,
+  "total_tokens": 29627,
+  "unique_wordforms": 8062,
+  "unique_lemmas": 6585,
+  "pos_distribution": {
+    "NOUN": 5954,
+    "PUNCT": 6270,
+    "PROPN": 874,
+    "CCONJ": 849,
+    "ADV": 1409,
+    "VERB": 2964,
+    "SYM": 2752,
+    "ADP": 1967,
+    "DET": 993,
+    "NUM": 242,
+    "PRON": 1833,
+    "INTJ": 91,
+    "PART": 708,
+    "AUX": 440,
+    "SCONJ": 429,
+    "ADJ": 1734,
+    "X": 118
+  },
+  "avg_tokens_per_sentence": 8.03
+}

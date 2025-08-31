@@ -1,0 +1,4 @@
+corpus/core filter=lfs diff=lfs merge=lfs -text
+backend/examples.cleaned.json filter=lfs diff=lfs merge=lfs -text
+backend/examples.json filter=lfs diff=lfs merge=lfs -text
+examples.json filter=lfs diff=lfs merge=lfs -text
